@@ -20,7 +20,10 @@ import outbardIcon from "../assets/outbard-icon-nobg.png";
 import SideBar from "./components/SideBar";
 
 import { app, db } from '../firebase'
-import { collection, getDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, getDoc, getDocs, doc, setDoc } from 'firebase/firestore';
+
+import { Auth, onAuthStateChanged } from "firebase/auth";
+
 // import geminiChat from '../GeminiIntegration';
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -36,6 +39,7 @@ export default function Home() {
   const [userChat, setuserChat] = useState()
   const { theme, toggleTheme } = useContext(ThemeContext);
   const [chathistory, setChatHistory] = useState([])
+const [previousConverstions, setpreviousConverstions] = useState([])
 
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState([]);
@@ -75,20 +79,15 @@ try {
     setMessage("")
     
     console.log(chathistory);
+    saveUserChat();
 
-    // return { text, history };
+    console.log("saved chathistory to firebase successfully")
 
     console.log("Got it")
 } catch (error) {
     console.log(error);
 }
 
-
-    // const {text, history} = await geminiChat(message, history);
-
-    // setResponse(text);
-
-    
   };
 
 //   const sendMessage = async () =>{
@@ -109,24 +108,40 @@ try {
 // console.log("dataaaaa>", response)
 //   }
 
-  // const sendUserChat = async () => {
-  //   try{
-  //     const convCollectionRef = collection(db, 'test_chat_user/user_email/conversations');
-  //   await setDoc(doc(convCollectionRef, 'messages'), {
-  //     content: inputData,
-  //     role: "user"
-  //   })
 
-  //   setuserChat(value);
-  //   setInputData(!value);
+//save conversation to firestore
+  const saveUserChat = async () => {
+    try{
+      const convCollectionRef = collection(db, 'test_chat_user/user_email/conversations');
+    await setDoc(doc(convCollectionRef, "conversations2"), {
+      chathistory
+    })
 
-  //   } catch(error){
-  //     console.log(error)
-  //   }
+    } catch(error){
+      console.log(error)
+    }
+  }
 
-  // }
+  //get conversations from firebase
+  const getUserChat = async () => {
+    try{
+      const convCollectionRef = collection(db, 'test_chat_user/user_email/conversations');
+    // const docSnap = await getDoc(doc(convCollectionRef))
+// const docRef = doc(db, "test_chat_user/user_email/conversations/")
+const docSnap = await getDocs(convCollectionRef)
 
-  // const [messages, setMessages] = useState([]);
+setpreviousConverstions(docSnap)
+
+console.log(previousConverstions)
+
+// previousConverstions.forEach((doc) =>{
+//   console.log("document data", doc.id)
+// } )
+
+    } catch(error){
+      console.log(error)
+    }
+  }
 
 
   const navigation = useNavigation();
@@ -226,7 +241,7 @@ try {
           </Pressable>
         </View>
 
-        <View
+        {/* <View
           style={{
             marginVertical: 30,
             marginHorizontal: 11,
@@ -265,21 +280,28 @@ try {
               size={28}
             />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
-        <TouchableOpacity style={styles.menuItem}>
-          <FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
-          <Link style={styles.menuItemText} href="/text">
-            Generate Text
-          </Link>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
-          <Link style={styles.menuItemText} href="/signup">
-            Signup
-          </Link>
-        </TouchableOpacity>
-      </View>
+{previousConverstions && 
+ (
+  previousConverstions.forEach((doc) =>{
+    <TouchableOpacity style={styles.menuItem}>
+    <FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
+    <Link style={styles.menuItemText} href="/signup">
+      {doc.id}
+    </Link>
+    </TouchableOpacity>
+  } )
+  )
+}
+
+<TouchableOpacity style={styles.menuItem}>
+<FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
+<Link style={styles.menuItemText} href="/signup">
+  Signup
+</Link>
+</TouchableOpacity>
+         </View>
     );
   }
 
@@ -305,7 +327,10 @@ try {
               borderRadius: 50,
               backgroundColor: theme === "dark" ? "#fff" : "#292230",
             }}
-            onPress={() => setisVisible(!isVisible)}
+            onPress={() => {
+              setisVisible(!isVisible)
+              getUserChat()
+            }}
           >
             <FontAwesome6
               style={{
@@ -370,7 +395,8 @@ try {
         </View>
       </View>
 
-      <ScrollView style={{marginBottom:30}}>
+      <ScrollView style={{maxHeight:"81%", marginHorizontal:7,}}>
+        
         {chathistory.length == 0 && (
           <View
             style={{
@@ -551,3 +577,4 @@ try {
     </View>
   );
 }
+

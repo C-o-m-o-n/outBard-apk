@@ -7,6 +7,7 @@ export default function Layout() {
     <ThemeProvider>
       <Stack
       screenOptions={{
+        headerShown:false,
         headerStyle: {
           backgroundColor: 'blue',
         },
