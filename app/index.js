@@ -26,9 +26,7 @@ import { collection, getDoc, doc, setDoc } from 'firebase/firestore';
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Access your API key as an environment variable (see "Set up your API key" above)
-const genAI = new GoogleGenerativeAI("AIzaSyCju5scpyj178pLfPfTUi7-8QPL72P05eA");
-
-// const genaiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCju5scpyj178pLfPfTUi7-8QPL72P05eA';
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export default function Home() {
   const colorScheme = useColorScheme();
@@ -94,7 +92,7 @@ try {
   };
 
 //   const sendMessage = async () =>{
-//     // const genAI = new GoogleGenerativeAI("AIzaSyCju5scpyj178pLfPfTUi7-8QPL72P05eA");
+//    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // const options = {
 //   method: 'POST',
 //   body: JSON.stringify({
@@ -372,7 +370,7 @@ try {
         </View>
       </View>
 
-      <ScrollView style={{marginBottom:20}}>
+      <ScrollView style={{marginBottom:30}}>
         {chathistory.length == 0 && (
           <View
             style={{
