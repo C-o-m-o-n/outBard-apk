@@ -1,25 +1,29 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity } from 'react-native';
 
-import '@react-native-firebase/auth';
-import '@react-native-firebase/firestore';
+import {app, auth} from '../firebase'
 
-import app from '../firebase'
+import {createUserWithEmailAndPassword} from 'firebase/auth'
+
 
 const SignUpScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSignUp = () => {
-    app.auth().createUserWithEmailAndPassword(email, password)
-      .then((userCredential) => {
-        // Signed up successfully, save user data to Firestore
-        saveUserDataToFirestore(userCredential.user.uid, email);
-      })
-      .catch((error) => {
-        console.error('Error signing up: ', error);
-        // Handle error (e.g., display error message to user)
-      });
+    createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      // Signed up 
+      console.log("User created successfully")
+      const user = userCredential.user;
+      // ...
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      console.log (errorMessage)
+      // ..
+    });
   };
 
   const saveUserDataToFirestore = (userId, email) => {
@@ -42,19 +46,50 @@ const SignUpScreen = () => {
   };
 
   return (
-    <View>
+    <View style={{display:"flex", flex:1 ,flexDirection:"column", justifyContent:"center", alignItems:"center", gap:15}}>
       <TextInput
-        placeholder="Email"
+          style={{
+            backgroundColor: "#919190",
+            padding: 15,
+            height:"auto",
+            width: "80%",
+            borderRadius: 30,
+            fontSize: 20,
+            // color: theme === "dark" ? "white" : "#292230",
+          }}
+          placeholder="Email"
         onChangeText={setEmail}
         value={email}
-      />
-      <TextInput
-        placeholder="Password"
+        />
+
+<TextInput
+          style={{
+            backgroundColor: "#919190",
+            padding: 15,
+            height:"auto",
+            width: "80%",
+            borderRadius: 30,
+            fontSize: 20,
+            // color: theme === "dark" ? "white" : "#292230",
+          }}
+          placeholder="Password"
         onChangeText={setPassword}
         value={password}
         secureTextEntry
-      />
-      <Button title="Sign Up" onPress={handleSignUp} />
+        />
+
+<TouchableOpacity style={{
+            backgroundColor: "#292230",
+            padding: 15,
+            height:"auto",
+            width: "40%",
+            borderRadius: 30,
+            fontSize: 20,
+
+            // color: theme === "dark" ? "white" : "#292230",
+          }} onPress={handleSignUp}>
+  <Text style={{color:"white",}}>Sign Up</Text>
+</TouchableOpacity>
     </View>
   );
 };

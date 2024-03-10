@@ -3,7 +3,7 @@
     "name": "outBard",
     "slug": "outBard",
     "version": "1.0.0",
-    "orientation": "landscape",
+    "orientation": "potrait",
     "icon": "./assets/outbard-icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {

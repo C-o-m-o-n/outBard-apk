@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link, Stack, useNavigation } from "expo-router";
 import {
   Text,
@@ -19,15 +19,29 @@ import outbardIcon from "../assets/outbard-icon-nobg.png";
 
 import SideBar from "./components/SideBar";
 
-import app from "../firebase";
+import { app, db } from '../firebase'
+import { collection, getDoc, doc, setDoc } from 'firebase/firestore';
+// import geminiChat from '../GeminiIntegration';
+
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Access your API key as an environment variable (see "Set up your API key" above)
+const genAI = new GoogleGenerativeAI("AIzaSyCju5scpyj178pLfPfTUi7-8QPL72P05eA");
+
+// const genaiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyCju5scpyj178pLfPfTUi7-8QPL72P05eA';
 
 export default function Home() {
   const colorScheme = useColorScheme();
 
   const [isVisible, setisVisible] = useState(false);
-  const [value, setvalue] = useState();
+  const [inputData, setInputData] = useState();
   const [userChat, setuserChat] = useState()
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const [chathistory, setChatHistory] = useState([])
+
+  const [message, setMessage] = useState('');
+  const [response, setResponse] = useState([]);
+
 
   function onClose() {
     setisVisible(!isVisible);
@@ -38,10 +52,84 @@ export default function Home() {
     toggleTheme(newTheme);
   };
 
-  const sendUserChat = () =>{
-    setuserChat(value);
-    setvalue(!value);
-  }
+
+  const sendMessage = async () => {
+// For text-only input, use the gemini-pro model
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+try {
+    const chat = model.startChat({
+        history: chathistory,
+        // generationConfig: {
+        //     maxOutputTokens: 100,
+        // },
+    });
+
+    console.log(`asking about ${message}........`)
+
+    const result = await chat.sendMessage(message);
+    const response = await result.response;
+    const text = response.text();
+
+    setChatHistory((oldHistory) => [...oldHistory, { role: "user", parts: message }, 
+    { role: "model", parts: text }])
+
+    setMessage("")
+    
+    console.log(chathistory);
+
+    // return { text, history };
+
+    console.log("Got it")
+} catch (error) {
+    console.log(error);
+}
+
+
+    // const {text, history} = await geminiChat(message, history);
+
+    // setResponse(text);
+
+    
+  };
+
+//   const sendMessage = async () =>{
+//     // const genAI = new GoogleGenerativeAI("AIzaSyCju5scpyj178pLfPfTUi7-8QPL72P05eA");
+// const options = {
+//   method: 'POST',
+//   body: JSON.stringify({
+//     history: chathistory,
+//     message: message
+//   }),
+//   Headers:{
+//     'content-Type': 'application/json'
+//   }
+// }
+
+// const  response = await fetch(genaiUrl, options)
+// const data = response.text()
+// console.log("dataaaaa>", response)
+//   }
+
+  // const sendUserChat = async () => {
+  //   try{
+  //     const convCollectionRef = collection(db, 'test_chat_user/user_email/conversations');
+  //   await setDoc(doc(convCollectionRef, 'messages'), {
+  //     content: inputData,
+  //     role: "user"
+  //   })
+
+  //   setuserChat(value);
+  //   setInputData(!value);
+
+  //   } catch(error){
+  //     console.log(error)
+  //   }
+
+  // }
+
+  // const [messages, setMessages] = useState([]);
+
 
   const navigation = useNavigation();
 
@@ -62,8 +150,8 @@ export default function Home() {
     },
     topContainer: {
       paddingTop: 40,
-      paddingHorizontal:2,
-      paddingBottom:5,
+      paddingHorizontal: 2,
+      paddingBottom: 5,
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
@@ -122,7 +210,7 @@ export default function Home() {
               size={24}
             />
           </TouchableOpacity>
-          
+
           <Pressable
             style={{
               padding: 10,
@@ -181,7 +269,7 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {/* <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem}>
           <FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
           <Link style={styles.menuItemText} href="/text">
             Generate Text
@@ -192,7 +280,7 @@ export default function Home() {
           <Link style={styles.menuItemText} href="/signup">
             Signup
           </Link>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     );
   }
@@ -208,32 +296,32 @@ export default function Home() {
         />
 
         <View style={{
-            display: "flex",
-            gap: 15,
-            flexDirection: "row",
-            alignItems: "center",
-          }}>
-        <TouchableOpacity
-          style={{
-            padding: 10,
-            borderRadius: 50,
-            backgroundColor: theme === "dark" ? "#fff" : "#292230",
-          }}
-          onPress={() => setisVisible(!isVisible)}
-        >
-          <FontAwesome6
+          display: "flex",
+          gap: 15,
+          flexDirection: "row",
+          alignItems: "center",
+        }}>
+          <TouchableOpacity
             style={{
-              color: theme === "dark" ? "#292230" : "white",
-              paddingHorizontal: 3,
+              padding: 10,
+              borderRadius: 50,
+              backgroundColor: theme === "dark" ? "#fff" : "#292230",
             }}
-            name="grip-lines"
-            size={24}
-          />
-        </TouchableOpacity>
-        <Text style={{color: theme === "dark" ? "white" : "#292230", fontSize: 20, fontWeight:"bold"}}>OutBard 2.0 </Text>
-        
+            onPress={() => setisVisible(!isVisible)}
+          >
+            <FontAwesome6
+              style={{
+                color: theme === "dark" ? "#292230" : "white",
+                paddingHorizontal: 3,
+              }}
+              name="grip-lines"
+              size={24}
+            />
+          </TouchableOpacity>
+          <Text style={{ color: theme === "dark" ? "white" : "#292230", fontSize: 20, fontWeight: "bold" }}>OutBard 2.0 </Text>
+
         </View>
-        
+
         <View
           style={{
             display: "flex",
@@ -284,54 +372,116 @@ export default function Home() {
         </View>
       </View>
 
-      <ScrollView>
-      {!userChat && (
-        <View
-        style={{
-          alignSelf: "center",
-          width: 150,
-          backgroundColor: theme === "dark" ? "transparent" : "#292230",
-          borderRadius: 100,
-        }}
-      >
-        <Image style={{ width: 150, height: 150, marginTop:20 }} source={outbardIcon} />
-      </View>
-      )}
+      <ScrollView style={{marginBottom:20}}>
+        {chathistory.length == 0 && (
+          <View
+            style={{
+              alignSelf: "center",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              marginTop: 50,
+              width: 150,
+              height: 150,
+              backgroundColor: theme === "dark" ? "transparent" : "#292230",
+              borderRadius: 100,
+            }}
+          >
+            <Image style={{ width: 150, height: 150, marginTop: 20, alignSelf: "center" }} source={outbardIcon} />
+          </View>
+        )}
 
-      {userChat && (
-        <View
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          alignSelf: "left",
-          width: "85%",
-          marginRight: 5,
-          marginTop:10,
-          borderRadius: 10,
-        }}
-      >
-        <TouchableOpacity
-          style={{
-            padding: 3,
-            alignSelf: "flex-start",
-            marginRight: 10,
-            marginLeft: 5,
-            borderRadius: 50,
-            backgroundColor: theme === "dark" ? "#fff" : "#292230",
-          }}
-        >
-          <FontAwesome6
-            style={{ color: theme === "dark" ? "#292230" : "white", paddingHorizontal: 3, paddingVertical:2 }}
-            name="user"
-            size={15}
-          />
-        </TouchableOpacity>
-        <Text style={{ color: theme === "dark" ? "white" : "#292230" }}>
-           {userChat}
-        </Text>
-      </View>
-      )}
+        {/* {message && (
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              alignSelf: "left",
+              width: "85%",
+              marginRight: 5,
+              marginTop: 10,
+              borderRadius: 10,
+            }}
+          >
+            <TouchableOpacity
+              style={{
+                padding: 3,
+                alignSelf: "flex-start",
+                marginRight: 10,
+                marginLeft: 5,
+                borderRadius: 50,
+                backgroundColor: theme === "dark" ? "#fff" : "#292230",
+              }}
+            >
+              <FontAwesome6
+                style={{ color: theme === "dark" ? "#292230" : "white", paddingHorizontal: 3, paddingVertical: 2 }}
+                name="user"
+                size={15}
+              />
+            </TouchableOpacity>
+            <Text style={{ color: theme === "dark" ? "white" : "#292230" }}>
+              {message}
+            </Text>
+          </View>
+        )} */}
+
+        {chathistory && (
+          chathistory.map((chatItem, index)=>
+          <View
+          key={index}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              alignSelf: "left",
+              width: "85%",
+              marginRight: 5,
+              marginTop: 10,
+              borderRadius: 10,
+            }}
+          >
+            {chathistory[index].role == "user" ? (
+              <TouchableOpacity
+              style={{
+                padding: 3,
+                alignSelf: "flex-start",
+                marginRight: 10,
+                marginLeft: 5,
+                borderRadius: 50,
+                backgroundColor: theme === "dark" ? "#fff" : "#292230",
+              }}
+            >
+              <FontAwesome6
+                style={{ color: theme === "dark" ? "#292230" : "white", paddingHorizontal: 3, paddingVertical: 2 }}
+                name="user"
+                size={15}
+              />
+            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+              style={{
+                padding: 3,
+                alignSelf: "flex-start",
+                marginRight: 10,
+                marginLeft: 5,
+                borderRadius: 50,
+                backgroundColor: theme === "dark" ? "#fff" : "#292230",
+              }}
+            >
+              <FontAwesome6
+                style={{ color: theme === "dark" ? "#292230" : "white", paddingHorizontal: 3, paddingVertical: 2 }}
+                name="robot"
+                size={15}
+              />
+            </TouchableOpacity>
+            )}
+            <Text style={{ color: theme === "dark" ? "white" : "#292230" }}>
+            {chathistory[index].parts}
+            </Text>
+          </View>
+          )
+        )}
       </ScrollView>
 
       <View
@@ -342,19 +492,20 @@ export default function Home() {
           justifyContent: "center",
           alignItems: "center",
           alignSelf: "center",
-          width:"100%",
+          width: "100%",
           backgroundColor: theme === "dark" ? "#222230" : "#efefef",
-          paddingTop:5,
-          paddingBottom:20,
+          paddingTop: 5,
+          paddingBottom: 20,
           bottom: 0,
         }}
       >
         <TouchableOpacity
+          onPress={() => run()}
           style={{
             position: "absolute",
             alignSelf: "center",
             right: 80,
-            top:9,
+            top: 9,
             zIndex: 1,
             padding: 10,
             borderRadius: 50,
@@ -372,20 +523,19 @@ export default function Home() {
             position: "relative",
             backgroundColor: "#919190",
             padding: 15,
+            height: "auto",
             width: "80%",
             borderRadius: 30,
             fontSize: 20,
             color: theme === "dark" ? "white" : "#292230",
           }}
-          value={value}
-          onChangeText={(text) => {
-            setvalue(text);
-          }}
+          onChangeText={setMessage}
+          value={message}
         />
 
         <TouchableOpacity>
           <MaterialIcons
-          onPress={sendUserChat}
+            onPress={sendMessage}
             style={{
               color: theme === "dark" ? "#292230" : "white",
               backgroundColor: theme === "dark" ? "#fff" : "#292230",
