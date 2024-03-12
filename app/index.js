@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link, Stack, useNavigation } from "expo-router";
+import { Link, Stack, router, useNavigation } from "expo-router";
 import {
   Text,
   StyleSheet,
@@ -21,6 +21,7 @@ import SideBar from "./components/SideBar";
 
 import { app, db } from '../firebase'
 import { collection, getDoc, getDocs, doc, setDoc } from 'firebase/firestore';
+import { getAuth } from "firebase/auth";
 
 import { Auth, onAuthStateChanged } from "firebase/auth";
 
@@ -43,6 +44,28 @@ const [previousConverstions, setpreviousConverstions] = useState([])
 
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState([]);
+  // const [activeConversation, setActiveConversation] = useState()
+
+// useEffect(() => {
+
+//   const auth = getAuth();
+//   const user  = auth.currentUser;
+  
+//   if(user != null){
+//     const displayname = user.displayName;
+//     const email = user.email;
+//     const photoURL = user.photoURL;
+//     // user.emailVerified;
+  
+//     const uid = user.uid;
+
+//     console.log("UID----:",uid)
+//   } else{
+//     // console.log("No current usr found")
+//     router.replace("/signup")
+//   }
+  
+// }, [])
 
 
   function onClose() {
@@ -130,13 +153,16 @@ try {
 // const docRef = doc(db, "test_chat_user/user_email/conversations/")
 const docSnap = await getDocs(convCollectionRef)
 
-setpreviousConverstions(docSnap)
+const list = []
+docSnap.forEach(doc => {
+  list.push({id: doc.id, data:doc.data()})
+})
 
-console.log(previousConverstions)
+setpreviousConverstions(list)
 
-// previousConverstions.forEach((doc) =>{
-//   console.log("document data", doc.id)
-// } )
+previousConverstions.map((item) => {
+  console.log("Item-----: ", item.data)
+})
 
     } catch(error){
       console.log(error)
@@ -241,23 +267,24 @@ console.log(previousConverstions)
           </Pressable>
         </View>
 
-        {/* <View
+        <View
           style={{
-            marginVertical: 30,
+            marginTop: 20,
             marginHorizontal: 11,
+            
             display: "flex",
             flexDirection: "row",
             justifyContent: "center",
             alignItems: "center",
             alignSelf: "center",
-            bottom: 20,
+            bottom: 10,
           }}
         >
           <TextInput
             style={{
               position: "relative",
               backgroundColor: "#919190",
-              padding: 15,
+              padding: 8,
               width: "80%",
               borderRadius: 30,
               fontSize: 20,
@@ -273,34 +300,60 @@ console.log(previousConverstions)
                 backgroundColor: theme === "dark" ? "#fff" : "#292230",
                 alignSelf: "center",
                 marginHorizontal: 10,
-                padding: 10,
+                padding: 8,
                 borderRadius: 50,
               }}
               name="search"
-              size={28}
+              size={24}
             />
           </TouchableOpacity>
-        </View> */}
+        </View>
 
-{previousConverstions && 
- (
-  previousConverstions.forEach((doc) =>{
-    <TouchableOpacity style={styles.menuItem}>
-    <FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
-    <Link style={styles.menuItemText} href="/signup">
-      {doc.id}
-    </Link>
-    </TouchableOpacity>
-  } )
-  )
-}
-
-<TouchableOpacity style={styles.menuItem}>
+{previousConverstions.map(item => 
+(
+  
+  <TouchableOpacity style={{display: "flex",
+  flexDirection: "row",
+  marginHorizontal: 2,
+  justifyContent:"space-between",
+  alignItems: "center",
+  padding: 5,
+  marginBottom: 5,marginTop:2}}
+  
+  onPress={()=>{
+    setChatHistory(item.data.chathistory)
+    setisVisible(!isVisible)
+  }}
+  >
+<View style={{display: "flex",
+  flexDirection: "row",
+  gap:15,
+  justifyContent:"space-between",
+  alignItems: "center",}}>
+<FontAwesome6 style={{color: theme === "dark" ? "white" : "#292230",}} name="book" size={12} />
+<Text style={{ color: theme === "dark" ? "white" : "#292230",
+      fontSize: 17,}}>
+  {item.id}
+</Text>
+</View>
+<View style={{display: "flex",
+  flexDirection: "row",
+  marginHorizontal: 2,
+  gap:14,
+  justifyContent:"space-between",
+  alignItems: "center",}}>
+<FontAwesome6 style={{ color: theme === "dark" ? "white" : "#292230",}} name="trash" size={12} />
+<FontAwesome6 style={{ color: theme === "dark" ? "white" : "#292230",}} name="edit" size={12} />
+</View>
+</TouchableOpacity>
+))}
+  
+  {/* <TouchableOpacity style={styles.menuItem}>
 <FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
 <Link style={styles.menuItemText} href="/signup">
   Signup
 </Link>
-</TouchableOpacity>
+</TouchableOpacity> */}
          </View>
     );
   }
@@ -396,6 +449,7 @@ console.log(previousConverstions)
       </View>
 
       <ScrollView style={{maxHeight:"81%", marginHorizontal:7,}}>
+      
         
         {chathistory.length == 0 && (
           <View
@@ -414,41 +468,14 @@ console.log(previousConverstions)
             <Image style={{ width: 150, height: 150, marginTop: 20, alignSelf: "center" }} source={outbardIcon} />
           </View>
         )}
+{/* 
+  {activeConversation ? (
+    <Text>
+    {activeConversation.}
+  </Text>
 
-        {/* {message && (
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              alignSelf: "left",
-              width: "85%",
-              marginRight: 5,
-              marginTop: 10,
-              borderRadius: 10,
-            }}
-          >
-            <TouchableOpacity
-              style={{
-                padding: 3,
-                alignSelf: "flex-start",
-                marginRight: 10,
-                marginLeft: 5,
-                borderRadius: 50,
-                backgroundColor: theme === "dark" ? "#fff" : "#292230",
-              }}
-            >
-              <FontAwesome6
-                style={{ color: theme === "dark" ? "#292230" : "white", paddingHorizontal: 3, paddingVertical: 2 }}
-                name="user"
-                size={15}
-              />
-            </TouchableOpacity>
-            <Text style={{ color: theme === "dark" ? "white" : "#292230" }}>
-              {message}
-            </Text>
-          </View>
-        )} */}
+
+) : ('')} */}
 
         {chathistory && (
           chathistory.map((chatItem, index)=>

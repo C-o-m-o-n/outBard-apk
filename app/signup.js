@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { Link, Stack, useNavigation } from "expo-router";
 import {
   View,
   TextInput,
   Text,
   Image,
   Alert,
+
   useColorScheme,
   TouchableOpacity,
 } from "react-native";
@@ -91,6 +93,7 @@ const SignUpScreen = () => {
       backgroundColor: colorScheme === 'dark' ? "#292230" : "white"
     }}
     >
+
      <View
             style={{
               alignSelf: "center",
@@ -104,6 +107,7 @@ const SignUpScreen = () => {
               borderRadius: 100,
             }}
           >
+            
             <Image style={{ width: 150, height: 150, marginTop: 20, alignSelf: "center" }} source={outbardIcon} />
           </View>
       <TextInput
@@ -177,6 +181,8 @@ const SignUpScreen = () => {
         <Text style={{ color: colorScheme === 'dark' ? "purple" : "#292230", alignSelf:"center", fontSize:20}}>login</Text>
       </TouchableOpacity>
       </View>
+      <Link style={{color: "red"}} href="/">Home</Link>
+
     </View>
   );
 };
