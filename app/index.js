@@ -11,6 +11,7 @@ import {
   Image,
   TextInput,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import ThemeContext from "./context/ThemeContext";
 import { FontAwesome6, MaterialIcons } from "@expo/vector-icons";
@@ -44,7 +45,9 @@ const [previousConverstions, setpreviousConverstions] = useState([])
 
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState([]);
-  // const [activeConversation, setActiveConversation] = useState()
+  const [activeConversationTitle, setActiveConversationTitle] = useState('')
+
+  const [loading, setloading] = useState(false)
 
 // useEffect(() => {
 
@@ -66,8 +69,6 @@ const [previousConverstions, setpreviousConverstions] = useState([])
 //   }
   
 // }, [])
-
-
   function onClose() {
     setisVisible(!isVisible);
   }
@@ -77,6 +78,14 @@ const [previousConverstions, setpreviousConverstions] = useState([])
     toggleTheme(newTheme);
   };
 
+
+// Function to extract the first few words from the user input
+const getConversationTitle = (message) => {
+  const words = message.split(' ');
+  const numberOfWords = 3;
+  const titleWords = words.slice(0, numberOfWords);
+  return titleWords.join(' ');
+}
 
   const sendMessage = async () => {
 // For text-only input, use the gemini-pro model
@@ -102,7 +111,12 @@ try {
     setMessage("")
     
     console.log(chathistory);
-    saveUserChat();
+
+    if(activeConversationTitle == ''){
+      setActiveConversationTitle(getConversationTitle(message))
+    }
+    
+    saveUserChat(activeConversationTitle);
 
     console.log("saved chathistory to firebase successfully")
 
@@ -111,38 +125,21 @@ try {
     console.log(error);
 }
 
-  };
-
-//   const sendMessage = async () =>{
-//    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-// const options = {
-//   method: 'POST',
-//   body: JSON.stringify({
-//     history: chathistory,
-//     message: message
-//   }),
-//   Headers:{
-//     'content-Type': 'application/json'
-//   }
-// }
-
-// const  response = await fetch(genaiUrl, options)
-// const data = response.text()
-// console.log("dataaaaa>", response)
-//   }
-
+  }
 
 //save conversation to firestore
-  const saveUserChat = async () => {
+  const saveUserChat = async (conversationTitle) => {
+    setloading(true)
     try{
       const convCollectionRef = collection(db, 'test_chat_user/user_email/conversations');
-    await setDoc(doc(convCollectionRef, "conversations2"), {
+    await setDoc(doc(convCollectionRef, conversationTitle), {
       chathistory
     })
 
     } catch(error){
       console.log(error)
     }
+    setloading(false)
   }
 
   //get conversations from firebase
@@ -321,7 +318,12 @@ previousConverstions.map((item) => {
   marginBottom: 5,marginTop:2}}
   
   onPress={()=>{
+    setloading(true)
+    setActiveConversationTitle(item.id)
+
+    console.log("activeConversationTitle :", activeConversationTitle)
     setChatHistory(item.data.chathistory)
+    setloading(false)
     setisVisible(!isVisible)
   }}
   >
@@ -336,6 +338,8 @@ previousConverstions.map((item) => {
   {item.id}
 </Text>
 </View>
+
+
 <View style={{display: "flex",
   flexDirection: "row",
   marginHorizontal: 2,
@@ -347,13 +351,11 @@ previousConverstions.map((item) => {
 </View>
 </TouchableOpacity>
 ))}
-  
-  {/* <TouchableOpacity style={styles.menuItem}>
-<FontAwesome6 style={styles.menuItemIcon} name="edit" size={24} />
-<Link style={styles.menuItemText} href="/signup">
-  Signup
-</Link>
-</TouchableOpacity> */}
+{loading && 
+(
+  <ActivityIndicator size='small' color="red" />
+)
+}
          </View>
     );
   }
@@ -468,15 +470,11 @@ previousConverstions.map((item) => {
             <Image style={{ width: 150, height: 150, marginTop: 20, alignSelf: "center" }} source={outbardIcon} />
           </View>
         )}
-{/* 
-  {activeConversation ? (
-    <Text>
-    {activeConversation.}
-  </Text>
-
-
-) : ('')} */}
-
+{loading && 
+(
+  <ActivityIndicator size='small' color="red" />
+)
+}
         {chathistory && (
           chathistory.map((chatItem, index)=>
           <View
